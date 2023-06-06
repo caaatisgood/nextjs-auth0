@@ -5,7 +5,7 @@ import {
   SessionStore as GenericSessionStore,
   SessionPayload,
   TransientStore,
-  clientFactory,
+  NodeClient,
   loginHandler as baseLoginHandler,
   logoutHandler as baseLogoutHandler,
   callbackHandler as baseCallbackHandler
@@ -161,28 +161,28 @@ export const _initAuth = (params?: ConfigParameters): Auth0Server & { sessionCac
   const { baseConfig, nextConfig } = getConfig({ ...params, session: { genId, ...params?.session } });
 
   // Init base layer (with base config)
-  const getClient = clientFactory(baseConfig, { name: 'nextjs-auth0', version });
+  const client = new NodeClient(baseConfig, { name: 'nextjs-auth0', version });
   const transientStore = new TransientStore(baseConfig);
 
   const sessionStore = baseConfig.session.store
     ? new StatefulSession<Session>(baseConfig)
     : new StatelessSession<Session>(baseConfig);
   const sessionCache = new SessionCache(baseConfig, sessionStore);
-  const baseHandleLogin = baseLoginHandler(baseConfig, getClient, transientStore);
-  const baseHandleLogout = baseLogoutHandler(baseConfig, getClient, sessionCache);
-  const baseHandleCallback = baseCallbackHandler(baseConfig, getClient, sessionCache, transientStore);
+  const baseHandleLogin = baseLoginHandler(baseConfig, client, transientStore);
+  const baseHandleLogout = baseLogoutHandler(baseConfig, client, sessionCache);
+  const baseHandleCallback = baseCallbackHandler(baseConfig, client, sessionCache, transientStore);
 
   // Init Next layer (with next config)
   const getSession = sessionFactory(sessionCache);
   const touchSession = touchSessionFactory(sessionCache);
   const updateSession = updateSessionFactory(sessionCache);
-  const getAccessToken = accessTokenFactory(nextConfig, getClient, sessionCache);
+  const getAccessToken = accessTokenFactory(nextConfig, client, sessionCache);
   const withApiAuthRequired = withApiAuthRequiredFactory(sessionCache);
   const withPageAuthRequired = withPageAuthRequiredFactory(nextConfig.routes.login, () => sessionCache);
   const handleLogin = loginHandler(baseHandleLogin, nextConfig, baseConfig);
   const handleLogout = logoutHandler(baseHandleLogout);
   const handleCallback = callbackHandler(baseHandleCallback, nextConfig);
-  const handleProfile = profileHandler(getClient, getAccessToken, sessionCache);
+  const handleProfile = profileHandler(client, getAccessToken, sessionCache);
   const handleAuth = handlerFactory({ handleLogin, handleLogout, handleCallback, handleProfile });
 
   return {

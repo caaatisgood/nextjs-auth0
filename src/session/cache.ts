@@ -1,9 +1,9 @@
 import { IncomingMessage, ServerResponse } from 'http';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { NextRequest, NextResponse } from 'next/server';
-import type { TokenSet } from 'openid-client';
+import type { TokenEndpointResponse } from '../auth0-session';
 import { Config, SessionCache as ISessionCache, AbstractSession } from '../auth0-session';
-import Session, { fromJson, fromTokenSet } from './session';
+import Session, { fromJson, fromTokenEndpointResponse } from './session';
 import { NodeRequest, NodeResponse } from '../auth0-session/http';
 import {
   Auth0NextApiRequest,
@@ -95,8 +95,8 @@ export default class SessionCache implements ISessionCache<Req, Res, Session> {
     return this.cache.get(req);
   }
 
-  fromTokenSet(tokenSet: TokenSet): Session {
-    return fromTokenSet(tokenSet, this.config);
+  fromTokenEndpointResponse(tokenSet: TokenEndpointResponse): Session {
+    return fromTokenEndpointResponse(tokenSet, this.config);
   }
 }
 

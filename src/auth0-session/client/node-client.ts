@@ -1,38 +1,50 @@
-import { Issuer, custom, Client, EndSessionParameters, ClientAuthMethod } from 'openid-client';
+import { Auth0Request } from '../http';
+import {
+  CallbackExtras,
+  CallbackParamsType,
+  OpenIDCallbackChecks,
+  TokenEndpointResponse,
+  AbstractClient
+} from './abstract-client';
+import {
+  Client,
+  ClientAuthMethod,
+  custom,
+  CustomHttpOptionsProvider,
+  EndSessionParameters,
+  Issuer
+} from 'openid-client';
+import { DiscoveryError } from '../utils/errors';
+import { createPrivateKey } from 'crypto';
+import { exportJWK } from 'jose';
 import url, { UrlObject } from 'url';
 import urlJoin from 'url-join';
-import createDebug from './utils/debug';
-import { DiscoveryError } from './utils/errors';
-import { Config } from './config';
 import { ParsedUrlQueryInput } from 'querystring';
-import { exportJWK } from 'jose';
-import { createPrivateKey } from 'crypto';
+import createDebug from '../utils/debug';
+import { IncomingMessage } from 'http';
 
 const debug = createDebug('client');
-
-export interface ClientFactory {
-  (): Promise<Client>;
-}
-
-export type Telemetry = {
-  name: string;
-  version: string;
-};
 
 function sortSpaceDelimitedString(str: string): string {
   return str.split(' ').sort().join(' ');
 }
 
-export default function get(config: Config, { name, version }: Telemetry): ClientFactory {
-  let client: Client | null = null;
+export class NodeClient extends AbstractClient {
+  private client?: Client;
 
-  return async (): Promise<Client> => {
-    if (client) {
-      return client;
+  private async getClient(): Promise<Client> {
+    if (this.client) {
+      return this.client;
     }
+    const {
+      config,
+      telemetry: { name, version }
+    } = this;
 
-    custom.setHttpOptionsDefaults({
+    const defaultHttpOptions: CustomHttpOptionsProvider = (_url, options) => ({
+      ...options,
       headers: {
+        ...options.headers,
         'User-Agent': `${name}/${version}`,
         ...(config.enableTelemetry
           ? {
@@ -50,13 +62,18 @@ export default function get(config: Config, { name, version }: Telemetry): Clien
       },
       timeout: config.httpTimeout
     });
+    const applyHttpOptionsCustom = (entity: Issuer<Client> | typeof Issuer | Client) => {
+      entity[custom.http_options] = defaultHttpOptions;
+    };
 
+    applyHttpOptionsCustom(Issuer);
     let issuer: Issuer<Client>;
     try {
       issuer = await Issuer.discover(config.issuerBaseURL);
     } catch (e) {
       throw new DiscoveryError(e, config.issuerBaseURL);
     }
+    applyHttpOptionsCustom(issuer);
 
     const issuerTokenAlgs = Array.isArray(issuer.id_token_signing_alg_values_supported)
       ? issuer.id_token_signing_alg_values_supported
@@ -97,7 +114,7 @@ export default function get(config: Config, { name, version }: Telemetry): Clien
       jwks = { keys: [jwk] };
     }
 
-    client = new issuer.Client(
+    this.client = new issuer.Client(
       {
         client_id: config.clientID,
         client_secret: config.clientSecret,
@@ -107,7 +124,9 @@ export default function get(config: Config, { name, version }: Telemetry): Clien
       },
       jwks
     );
-    client[custom.clock_tolerance] = config.clockTolerance;
+    applyHttpOptionsCustom(this.client);
+
+    this.client[custom.clock_tolerance] = config.clockTolerance;
 
     if (config.idpLogout) {
       if (
@@ -115,7 +134,7 @@ export default function get(config: Config, { name, version }: Telemetry): Clien
         ((url.parse(issuer.metadata.issuer).hostname as string).match('\\.auth0\\.com$') &&
           config.auth0Logout !== false)
       ) {
-        Object.defineProperty(client, 'endSessionUrl', {
+        Object.defineProperty(this.client, 'endSessionUrl', {
           value(params: EndSessionParameters) {
             const { id_token_hint, post_logout_redirect_uri, ...extraParams } = params;
             const parsedUrl: UrlObject = url.parse(urlJoin(issuer.metadata.issuer, '/v2/logout'));
@@ -137,6 +156,45 @@ export default function get(config: Config, { name, version }: Telemetry): Clien
       }
     }
 
-    return client;
-  };
+    return this.client;
+  }
+
+  async callbackParams(req: Auth0Request) {
+    const client = await this.getClient();
+    return client.callbackParams({
+      method: req.getMethod(),
+      url: req.getUrl(),
+      body: await req.getBody()
+    } as unknown as IncomingMessage);
+  }
+
+  async callback(
+    redirectUri: string,
+    parameters: CallbackParamsType,
+    checks?: OpenIDCallbackChecks,
+    extras?: CallbackExtras
+  ): Promise<TokenEndpointResponse> {
+    const client = await this.getClient();
+    return client.callback(redirectUri, parameters, checks, extras);
+  }
+
+  async authorizationUrl(parameters?: Record<string, unknown>): Promise<string> {
+    const client = await this.getClient();
+    return client.authorizationUrl(parameters);
+  }
+
+  async endSessionUrl(parameters?: EndSessionParameters): Promise<string> {
+    const client = await this.getClient();
+    return client.endSessionUrl(parameters);
+  }
+
+  async userinfo(accessToken: string): Promise<Record<string, unknown>> {
+    const client = await this.getClient();
+    return client.userinfo(accessToken);
+  }
+
+  async refresh(refreshToken: string, extras: { exchangeBody: Record<string, any> }): Promise<TokenEndpointResponse> {
+    const client = await this.getClient();
+    return client.refresh(refreshToken, extras);
+  }
 }

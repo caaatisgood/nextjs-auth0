@@ -1,9 +1,7 @@
-import type { IncomingMessage } from 'http';
 import urlJoin from 'url-join';
 import createHttpError from 'http-errors';
 import { errors } from 'openid-client';
 import { AuthorizationParameters, Config } from '../config';
-import { ClientFactory } from '../client';
 import TransientStore from '../transient-store';
 import { decodeState } from '../utils/encoding';
 import { SessionCache } from '../session-cache';
@@ -15,6 +13,7 @@ import {
   MissingStateParamError
 } from '../utils/errors';
 import { Auth0Request, Auth0Response } from '../http';
+import { AbstractClient } from '../client/abstract-client';
 
 function getRedirectUri(config: Config): string {
   return urlJoin(config.baseURL, config.routes.callback);
@@ -36,21 +35,16 @@ export type HandleCallback = (req: Auth0Request, res: Auth0Response, options?: C
 
 export default function callbackHandlerFactory(
   config: Config,
-  getClient: ClientFactory,
+  client: AbstractClient,
   sessionCache: SessionCache,
   transientCookieHandler: TransientStore
 ): HandleCallback {
   return async (req, res, options) => {
-    const client = await getClient();
     const redirectUri = options?.redirectUri || getRedirectUri(config);
 
-    let tokenSet;
+    let tokenResponse;
 
-    const callbackParams = client.callbackParams({
-      method: req.getMethod(),
-      url: req.getUrl(),
-      body: await req.getBody()
-    } as unknown as IncomingMessage);
+    const callbackParams = await client.callbackParams(req);
 
     if (!callbackParams.state) {
       throw createHttpError(404, new MissingStateParamError());
@@ -69,7 +63,7 @@ export default function callbackHandlerFactory(
       (await transientCookieHandler.read('response_type', req, res)) || config.authorizationParams.response_type;
 
     try {
-      tokenSet = await client.callback(
+      tokenResponse = await client.callback(
         redirectUri,
         callbackParams,
         {
@@ -94,7 +88,7 @@ export default function callbackHandlerFactory(
     }
 
     const openidState: { returnTo?: string } = decodeState(expectedState as string) as ValidState;
-    let session = sessionCache.fromTokenSet(tokenSet);
+    let session = sessionCache.fromTokenEndpointResponse(tokenResponse);
 
     if (options?.afterCallback) {
       session = await options.afterCallback(session, openidState);

@@ -3,9 +3,9 @@ import { strict as assert } from 'assert';
 import { Config, LoginOptions } from '../config';
 import TransientStore, { StoreOptions } from '../transient-store';
 import { encodeState } from '../utils/encoding';
-import { ClientFactory } from '../client';
 import createDebug from '../utils/debug';
 import { Auth0Request, Auth0Response } from '../http';
+import { AbstractClient } from '../client/abstract-client';
 
 const debug = createDebug('handlers');
 
@@ -17,12 +17,10 @@ export type HandleLogin = (req: Auth0Request, res: Auth0Response, options?: Logi
 
 export default function loginHandlerFactory(
   config: Config,
-  getClient: ClientFactory,
+  client: AbstractClient,
   transientHandler: TransientStore
 ): HandleLogin {
   return async (req, res, options = {}) => {
-    const client = await getClient();
-
     const returnTo = options.returnTo || config.baseURL;
 
     const opts = {
@@ -94,7 +92,7 @@ export default function loginHandlerFactory(
       });
     }
 
-    const authorizationUrl = client.authorizationUrl(authParams);
+    const authorizationUrl = await client.authorizationUrl(authParams);
     debug('redirecting to %s', authorizationUrl);
 
     res.redirect(authorizationUrl);
