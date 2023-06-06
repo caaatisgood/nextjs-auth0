@@ -2,10 +2,10 @@ import {
   StatelessSession,
   StatefulSession,
   TransientStore,
-  NodeClient,
   loginHandler as baseLoginHandler,
   logoutHandler as baseLogoutHandler,
-  callbackHandler as baseCallbackHandler
+  callbackHandler as baseCallbackHandler,
+  AbstractClient
 } from './auth0-session';
 import { handlerFactory, callbackHandler, loginHandler, logoutHandler, profileHandler } from './handlers';
 import {
@@ -17,9 +17,9 @@ import {
   updateSessionFactory
 } from './session/';
 import { withPageAuthRequiredFactory, withApiAuthRequiredFactory } from './helpers';
-import version from './version';
 import { ConfigParameters, BaseConfig, NextConfig } from './config';
 import { Auth0Server } from './shared';
+import withMiddlewareAuthRequiredFactory from './helpers/with-middleware-auth-required';
 
 /**
  * Initialise your own instance of the SDK.
@@ -32,15 +32,16 @@ export type InitAuth0 = (params?: ConfigParameters) => Auth0Server;
 
 export const _initAuth = ({
   baseConfig,
-  nextConfig
+  nextConfig,
+  client
 }: {
   baseConfig: BaseConfig;
   nextConfig: NextConfig;
+  client: AbstractClient;
 }): Auth0Server & {
   sessionCache: SessionCache;
 } => {
   // Init base layer (with base config)
-  const client = new NodeClient(baseConfig, { name: 'nextjs-auth0', version });
   const transientStore = new TransientStore(baseConfig);
 
   const sessionStore = baseConfig.session.store
@@ -63,6 +64,7 @@ export const _initAuth = ({
   const handleCallback = callbackHandler(baseHandleCallback, nextConfig);
   const handleProfile = profileHandler(client, getAccessToken, sessionCache);
   const handleAuth = handlerFactory({ handleLogin, handleLogout, handleCallback, handleProfile });
+  const withMiddlewareAuthRequired = withMiddlewareAuthRequiredFactory(nextConfig.routes, () => sessionCache);
 
   return {
     sessionCache,
@@ -76,6 +78,7 @@ export const _initAuth = ({
     handleLogout,
     handleCallback,
     handleProfile,
-    handleAuth
+    handleAuth,
+    withMiddlewareAuthRequired
   };
 };

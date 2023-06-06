@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import {
-  Auth0Server,
+  Auth0Server as Auth0ServerShared,
+  ConfigParameters,
   GetAccessToken,
   GetSession,
   HandleAuth,
@@ -8,7 +9,6 @@ import {
   HandleLogin,
   HandleLogout,
   HandleProfile,
-  InitAuth0,
   SessionCache,
   UpdateSession,
   WithApiAuthRequired,
@@ -18,19 +18,35 @@ import { _initAuth } from './init';
 import { setIsUsingNamedExports, setIsUsingOwnInstance } from './utils/instance-check';
 import { getConfig, getLoginUrl } from './config';
 import { withPageAuthRequiredFactory } from './helpers';
+import { NodeClient } from './auth0-session';
+import version from './version';
 
 const genId = () => crypto.randomBytes(16).toString('hex');
 
-let instance: Auth0Server & { sessionCache: SessionCache };
+const telemetry = { name: 'nextjs-auth0', version };
+
+export type Auth0Server = Omit<Auth0ServerShared, 'withMiddlewareAuthRequired'>;
+
+let instance: Auth0ServerShared & { sessionCache: SessionCache };
+
+/**
+ * Initialise your own instance of the SDK.
+ *
+ * See {@link ConfigParameters}.
+ *
+ * @category Server
+ */
+export type InitAuth0 = (params?: ConfigParameters) => Omit<Auth0Server, 'withMiddlewareAuthRequired'>;
 
 // For using managed instance with named exports.
-function getInstance(): Auth0Server & { sessionCache: SessionCache } {
+function getInstance(): Auth0ServerShared & { sessionCache: SessionCache } {
   setIsUsingNamedExports();
   if (instance) {
     return instance;
   }
   const { baseConfig, nextConfig } = getConfig({ session: { genId } });
-  instance = _initAuth({ baseConfig, nextConfig });
+  const client = new NodeClient(baseConfig, telemetry);
+  instance = _initAuth({ baseConfig, nextConfig, client });
   return instance;
 }
 
@@ -38,7 +54,8 @@ function getInstance(): Auth0Server & { sessionCache: SessionCache } {
 export const initAuth0: InitAuth0 = (params) => {
   setIsUsingOwnInstance();
   const { baseConfig, nextConfig } = getConfig({ ...params, session: { genId, ...params?.session } });
-  const { sessionCache, ...publicApi } = _initAuth({ baseConfig, nextConfig });
+  const client = new NodeClient(baseConfig, telemetry);
+  const { sessionCache, withMiddlewareAuthRequired, ...publicApi } = _initAuth({ baseConfig, nextConfig, client });
   return publicApi;
 };
 

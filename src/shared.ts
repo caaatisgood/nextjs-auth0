@@ -36,6 +36,7 @@ import {
   PageRoute
 } from './helpers';
 import { ConfigParameters } from './config';
+import { WithMiddlewareAuthRequired } from './helpers/with-middleware-auth-required';
 
 /**
  * The SDK server instance.
@@ -101,16 +102,12 @@ export interface Auth0Server {
    * Create the main handlers for your api routes.
    */
   handleAuth: HandleAuth;
-}
 
-/**
- * Initialise your own instance of the SDK.
- *
- * See {@link ConfigParameters}.
- *
- * @category Server
- */
-export type InitAuth0 = (params?: ConfigParameters) => Auth0Server;
+  /**
+   * Add auth to your middleware functions.
+   */
+  withMiddlewareAuthRequired: WithMiddlewareAuthRequired;
+}
 
 export {
   AuthError,
