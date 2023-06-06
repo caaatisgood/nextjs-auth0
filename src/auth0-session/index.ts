@@ -15,4 +15,5 @@ export { default as logoutHandler, HandleLogout } from './handlers/logout';
 export { default as callbackHandler, CallbackOptions, AfterCallback, HandleCallback } from './handlers/callback';
 export { TokenEndpointResponse, AbstractClient } from './client/abstract-client';
 export { NodeClient } from './client/node-client';
+export { EdgeClient } from './client/edge-client';
 export { SessionCache } from './session-cache';
