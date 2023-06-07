@@ -55,6 +55,42 @@ export interface EndSessionParameters {
   [key: string]: unknown;
 }
 
+export type ClientAuthMethod =
+  | 'client_secret_basic'
+  | 'client_secret_post'
+  | 'client_secret_jwt'
+  | 'private_key_jwt'
+  | 'tls_client_auth'
+  | 'self_signed_tls_client_auth'
+  | 'none';
+
+export interface AuthorizationParameters {
+  acr_values?: string;
+  audience?: string;
+  claims_locales?: string;
+  client_id?: string;
+  code_challenge_method?: string;
+  code_challenge?: string;
+  display?: string;
+  id_token_hint?: string;
+  login_hint?: string;
+  max_age?: number;
+  nonce?: string;
+  prompt?: string;
+  redirect_uri?: string;
+  registration?: string;
+  request_uri?: string;
+  request?: string;
+  resource?: string | string[];
+  response_mode?: string;
+  response_type?: string;
+  scope?: string;
+  state?: string;
+  ui_locales?: string;
+
+  [key: string]: unknown;
+}
+
 export abstract class AbstractClient {
   constructor(protected config: Config, protected telemetry: Telemetry) {}
   abstract callbackParams(req: Auth0Request): Promise<CallbackParamsType>;
@@ -71,4 +107,7 @@ export abstract class AbstractClient {
     refreshToken: string,
     extras: { exchangeBody?: Record<string, any> }
   ): Promise<TokenEndpointResponse>;
+  abstract generateRandomCodeVerifier(): string;
+  abstract generateRandomNonce(): string;
+  abstract calculateCodeChallenge(codeVerifier: string): string;
 }

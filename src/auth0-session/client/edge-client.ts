@@ -37,4 +37,16 @@ export class EdgeClient extends AbstractClient {
   async refresh(refreshToken: string, extras: { exchangeBody: Record<string, any> }): Promise<TokenEndpointResponse> {
     return { refreshToken, extras } as any;
   }
+
+  generateRandomCodeVerifier(): string {
+    return '';
+  }
+
+  generateRandomNonce(): string {
+    return '';
+  }
+
+  calculateCodeChallenge(codeVerifier: string): string {
+    return codeVerifier;
+  }
 }

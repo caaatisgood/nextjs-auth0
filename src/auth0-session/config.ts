@@ -1,4 +1,7 @@
-import type { AuthorizationParameters as OidcAuthorizationParameters, ClientAuthMethod } from 'openid-client';
+import type {
+  AuthorizationParameters as OidcAuthorizationParameters,
+  ClientAuthMethod
+} from './client/abstract-client';
 import { SessionStore } from './session/stateful-session';
 
 /**

@@ -1,5 +1,4 @@
-import type { AuthorizationParameters as OidcAuthorizationParameters } from 'openid-client';
-import type { LoginOptions } from './auth0-session/config';
+import type { LoginOptions, AuthorizationParameters as OidcAuthorizationParameters } from './auth0-session/config';
 import { SessionStore } from './auth0-session/session/stateful-session';
 import Session from './session/session';
 import { DeepPartial, get as getBaseConfig } from './auth0-session/get-config';

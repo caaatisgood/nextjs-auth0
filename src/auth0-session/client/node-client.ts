@@ -12,9 +12,11 @@ import {
   custom,
   CustomHttpOptionsProvider,
   EndSessionParameters,
+  errors,
+  generators,
   Issuer
 } from 'openid-client';
-import { DiscoveryError } from '../utils/errors';
+import { ApplicationError, DiscoveryError, EscapedError, IdentityProviderError } from '../utils/errors';
 import { createPrivateKey } from 'crypto';
 import { exportJWK } from 'jose';
 import url, { UrlObject } from 'url';
@@ -22,6 +24,7 @@ import urlJoin from 'url-join';
 import { ParsedUrlQueryInput } from 'querystring';
 import createDebug from '../utils/debug';
 import { IncomingMessage } from 'http';
+import { AccessTokenError, AccessTokenErrorCode } from '../../utils/errors';
 
 const debug = createDebug('client');
 
@@ -175,7 +178,18 @@ export class NodeClient extends AbstractClient {
     extras?: CallbackExtras
   ): Promise<TokenEndpointResponse> {
     const client = await this.getClient();
-    return client.callback(redirectUri, parameters, checks, extras);
+    try {
+      return await client.callback(redirectUri, parameters, checks, extras);
+    } catch (err) {
+      if (err instanceof errors.OPError) {
+        throw new IdentityProviderError(err);
+      } else if (err instanceof errors.RPError) {
+        throw new ApplicationError(err);
+        /* c8 ignore next 3 */
+      } else {
+        throw new EscapedError(err.message);
+      }
+    }
   }
 
   async authorizationUrl(parameters?: Record<string, unknown>): Promise<string> {
@@ -195,6 +209,26 @@ export class NodeClient extends AbstractClient {
 
   async refresh(refreshToken: string, extras: { exchangeBody: Record<string, any> }): Promise<TokenEndpointResponse> {
     const client = await this.getClient();
-    return client.refresh(refreshToken, extras);
+    try {
+      return await client.refresh(refreshToken, extras);
+    } catch (e) {
+      throw new AccessTokenError(
+        AccessTokenErrorCode.FAILED_REFRESH_GRANT,
+        'The request to refresh the access token failed.',
+        new IdentityProviderError(e as errors.OPError)
+      );
+    }
+  }
+
+  generateRandomCodeVerifier(): string {
+    return generators.codeVerifier();
+  }
+
+  generateRandomNonce(): string {
+    return generators.nonce();
+  }
+
+  calculateCodeChallenge(codeVerifier: string): string {
+    return generators.codeChallenge(codeVerifier);
   }
 }

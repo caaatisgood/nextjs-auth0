@@ -1,7 +1,6 @@
 import { IncomingMessage, ServerResponse } from 'http';
 import { NextApiRequest, NextApiResponse } from 'next';
-import type { errors } from 'openid-client';
-import { AbstractClient, IdentityProviderError } from '../auth0-session';
+import { AbstractClient } from '../auth0-session';
 import { AccessTokenError, AccessTokenErrorCode } from '../utils/errors';
 import { intersect, match } from '../utils/array';
 import { Session, SessionCache, fromTokenEndpointResponse, get, set } from '../session';
@@ -177,18 +176,9 @@ export default function accessTokenFactory(
       (session.refreshToken && session.accessTokenExpiresAt * 1000 - 60000 < Date.now()) ||
       (session.refreshToken && options && options.refresh)
     ) {
-      let tokenSet;
-      try {
-        tokenSet = await client.refresh(session.refreshToken, {
-          exchangeBody: options?.authorizationParams
-        });
-      } catch (e) {
-        throw new AccessTokenError(
-          AccessTokenErrorCode.FAILED_REFRESH_GRANT,
-          'The request to refresh the access token failed.',
-          new IdentityProviderError(e as errors.OPError)
-        );
-      }
+      const tokenSet = await client.refresh(session.refreshToken, {
+        exchangeBody: options?.authorizationParams
+      });
 
       // Update the session.
       const newSession = fromTokenEndpointResponse(tokenSet, config);

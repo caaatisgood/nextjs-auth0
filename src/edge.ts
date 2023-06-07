@@ -17,7 +17,7 @@ import { _initAuth } from './init';
 import { setIsUsingNamedExports, setIsUsingOwnInstance } from './utils/instance-check';
 import { getConfig, getLoginUrl } from './config';
 import { withPageAuthRequiredFactory } from './helpers';
-import { EdgeClient } from './auth0-session';
+import { EdgeClient } from './auth0-session/client/edge-client';
 import version from './version';
 import { WithMiddlewareAuthRequired } from './helpers/with-middleware-auth-required';
 
@@ -40,7 +40,7 @@ let instance: Auth0Server & { sessionCache: SessionCache };
  *
  * @category Server
  */
-export type InitAuth0 = (params?: ConfigParameters) => Omit<Auth0Server, 'withMiddlewareAuthRequired'>;
+export type InitAuth0 = (params?: ConfigParameters) => Auth0Server;
 
 // For using managed instance with named exports.
 function getInstance(): Auth0Server & { sessionCache: SessionCache } {

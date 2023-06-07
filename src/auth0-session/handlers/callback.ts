@@ -1,17 +1,9 @@
 import urlJoin from 'url-join';
-import createHttpError from 'http-errors';
-import { errors } from 'openid-client';
 import { AuthorizationParameters, Config } from '../config';
 import TransientStore from '../transient-store';
 import { decodeState } from '../utils/encoding';
 import { SessionCache } from '../session-cache';
-import {
-  ApplicationError,
-  EscapedError,
-  IdentityProviderError,
-  MissingStateCookieError,
-  MissingStateParamError
-} from '../utils/errors';
+import { MissingStateCookieError, MissingStateParamError } from '../utils/errors';
 import { Auth0Request, Auth0Response } from '../http';
 import { AbstractClient } from '../client/abstract-client';
 
@@ -47,13 +39,13 @@ export default function callbackHandlerFactory(
     const callbackParams = await client.callbackParams(req);
 
     if (!callbackParams.state) {
-      throw createHttpError(404, new MissingStateParamError());
+      throw new MissingStateParamError();
     }
 
     const expectedState = await transientCookieHandler.read('state', req, res);
 
     if (!expectedState) {
-      throw createHttpError(400, new MissingStateCookieError());
+      throw new MissingStateCookieError();
     }
 
     const max_age = await transientCookieHandler.read('max_age', req, res);
@@ -76,15 +68,10 @@ export default function callbackHandlerFactory(
         { exchangeBody: options?.authorizationParams }
       );
     } catch (err) {
-      if (err instanceof errors.OPError) {
-        err = new IdentityProviderError(err);
-      } else if (err instanceof errors.RPError) {
-        err = new ApplicationError(err);
-        /* c8 ignore next 3 */
-      } else {
-        err = new EscapedError(err.message);
-      }
-      throw createHttpError(400, err, { openIdState: decodeState(expectedState) });
+      err.status = 400;
+      err.statusCode = 400;
+      err.openIdState = decodeState(expectedState);
+      throw err;
     }
 
     const openidState: { returnTo?: string } = decodeState(expectedState as string) as ValidState;

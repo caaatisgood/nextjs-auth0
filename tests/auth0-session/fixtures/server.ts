@@ -70,7 +70,7 @@ type Handlers = {
 const createHandlers = (params: ConfigParameters): Handlers => {
   const config = getConfig(params);
   const client = new NodeClient(config, { name: 'nextjs-auth0', version });
-  const transientStore = new TransientStore(config);
+  const transientStore = new TransientStore(config, client);
   const cookieStore = params.session?.store ? new StatefulSession<any>(config) : new StatelessSession<any>(config);
   const sessionCache = new TestSessionCache(cookieStore);
 

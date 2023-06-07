@@ -1,8 +1,8 @@
-import { generators } from 'openid-client';
 import { generateCookieValue, getCookieValue } from './utils/signed-cookies';
 import { signing } from './utils/hkdf';
 import { Config } from './config';
 import { Auth0Request, Auth0Response } from './http';
+import { AbstractClient } from './client/abstract-client';
 
 export interface StoreOptions {
   sameSite?: boolean | 'lax' | 'strict' | 'none';
@@ -12,7 +12,7 @@ export interface StoreOptions {
 export default class TransientStore {
   private keys?: Uint8Array[];
 
-  constructor(private config: Config) {}
+  constructor(private config: Config, private client: AbstractClient) {}
 
   private async getKeys(): Promise<Uint8Array[]> {
     if (!this.keys) {
@@ -106,7 +106,7 @@ export default class TransientStore {
    * @return {String}
    */
   generateNonce(): string {
-    return generators.nonce();
+    return this.client.generateRandomNonce();
   }
 
   /**
@@ -115,7 +115,7 @@ export default class TransientStore {
    * @return {String}
    */
   generateCodeVerifier(): string {
-    return generators.codeVerifier();
+    return this.client.generateRandomCodeVerifier();
   }
 
   /**
@@ -125,6 +125,6 @@ export default class TransientStore {
    * @return {String}
    */
   calculateCodeChallenge(codeVerifier: string): string {
-    return generators.codeChallenge(codeVerifier);
+    return this.client.calculateCodeChallenge(codeVerifier);
   }
 }
