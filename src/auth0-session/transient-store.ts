@@ -2,17 +2,16 @@ import { generateCookieValue, getCookieValue } from './utils/signed-cookies';
 import { signing } from './utils/hkdf';
 import { Config } from './config';
 import { Auth0Request, Auth0Response } from './http';
-import { AbstractClient } from './client/abstract-client';
 
 export interface StoreOptions {
   sameSite?: boolean | 'lax' | 'strict' | 'none';
-  value?: string;
+  value: string;
 }
 
 export default class TransientStore {
   private keys?: Uint8Array[];
 
-  constructor(private config: Config, private client: AbstractClient) {}
+  constructor(private config: Config) {}
 
   private async getKeys(): Promise<Uint8Array[]> {
     if (!this.keys) {
@@ -39,7 +38,7 @@ export default class TransientStore {
     key: string,
     _req: Auth0Request,
     res: Auth0Response,
-    { sameSite = 'none', value = this.generateNonce() }: StoreOptions
+    { sameSite = 'none', value }: StoreOptions
   ): Promise<string> {
     const isSameSiteNone = sameSite === 'none';
     const { domain, path, secure } = this.config.session.cookie;
@@ -98,33 +97,5 @@ export default class TransientStore {
     }
 
     return value;
-  }
-
-  /**
-   * Generates a `nonce` value.
-   *
-   * @return {String}
-   */
-  generateNonce(): string {
-    return this.client.generateRandomNonce();
-  }
-
-  /**
-   * Generates a `code_verifier` value.
-   *
-   * @return {String}
-   */
-  generateCodeVerifier(): string {
-    return this.client.generateRandomCodeVerifier();
-  }
-
-  /**
-   * Calculates a `code_challenge` value for a given `codeVerifier`.
-   *
-   * @param {String} codeVerifier Code verifier to calculate the `code_challenge` value from.
-   * @return {String}
-   */
-  calculateCodeChallenge(codeVerifier: string): string {
-    return this.client.calculateCodeChallenge(codeVerifier);
   }
 }

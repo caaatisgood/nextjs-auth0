@@ -5,7 +5,6 @@ import { signing } from '../../src/auth0-session/utils/hkdf';
 import { defaultConfig, fromCookieJar, get, getCookie, toSignedCookieJar } from './fixtures/helpers';
 import { setup as createServer, teardown } from './fixtures/server';
 import { NodeRequest, NodeResponse } from '../../src/auth0-session/http';
-import { NodeClient } from '../../src/auth0-session/client/node-client';
 
 const generateSignature = async (cookie: string, value: string): Promise<string> => {
   const key = await signing(defaultConfig.secret as string);
@@ -28,11 +27,6 @@ const setup = async (
     https
   });
 
-const getTransientStore = (opts: any): TransientStore => {
-  const config = getConfig(opts);
-  return new TransientStore(config, new NodeClient(config, { name: 'foo', version: 'bar' }));
-};
-
 describe('TransientStore', () => {
   afterEach(teardown);
 
@@ -40,7 +34,7 @@ describe('TransientStore', () => {
     const baseURL: string = await setup(defaultConfig, async (req: NodeRequest, res: NodeResponse) =>
       transientStore.save('test_key', req, res, { value: 'foo' })
     );
-    const transientStore: TransientStore = getTransientStore({ ...defaultConfig, baseURL });
+    const transientStore: TransientStore = new TransientStore(getConfig({ ...defaultConfig, baseURL }));
     const cookieJar = new CookieJar();
     const { value } = await get(baseURL, '/', { cookieJar });
     const cookies = fromCookieJar(cookieJar, baseURL);
@@ -54,7 +48,7 @@ describe('TransientStore', () => {
     const baseURL: string = await setup(config, (req: NodeRequest, res: NodeResponse) =>
       transientStore.save('test_key', req, res, { value: 'foo' })
     );
-    const transientStore = getTransientStore({ ...config, baseURL });
+    const transientStore = new TransientStore(getConfig({ ...config, baseURL }));
     const cookieJar = new CookieJar();
     const { value } = await get(baseURL, '/', { cookieJar });
     const cookies = fromCookieJar(cookieJar, baseURL);
@@ -67,7 +61,7 @@ describe('TransientStore', () => {
     const baseURL: string = await setup(defaultConfig, (req: NodeRequest, res: NodeResponse) =>
       transientStore.save('test_key', req, res, { value: 'foo' })
     );
-    const transientStore = getTransientStore({ ...defaultConfig, baseURL });
+    const transientStore = new TransientStore(getConfig({ ...defaultConfig, baseURL }));
     const cookieJar = new CookieJar();
     const { value } = await get(baseURL, '/', { cookieJar });
     const cookie = getCookie('test_key', cookieJar, baseURL);
@@ -81,7 +75,7 @@ describe('TransientStore', () => {
       (req: NodeRequest, res: NodeResponse) => transientStore.save('test_key', req, res, { value: 'foo' }),
       false
     );
-    const transientStore = getTransientStore({ ...defaultConfig, baseURL });
+    const transientStore = new TransientStore(getConfig({ ...defaultConfig, baseURL }));
     const cookieJar = new CookieJar();
     const { value } = await get(baseURL, '/', { cookieJar });
     const cookie = getCookie('test_key', cookieJar, baseURL);
@@ -95,7 +89,7 @@ describe('TransientStore', () => {
       (req: NodeRequest, res: NodeResponse) => transientStore.save('test_key', req, res, { value: 'foo' }),
       false
     );
-    const transientStore = getTransientStore({ ...defaultConfig, baseURL });
+    const transientStore = new TransientStore(getConfig({ ...defaultConfig, baseURL }));
     const cookieJar = new CookieJar();
     const { value } = await get(baseURL, '/', { cookieJar });
     const fallbackCookie = getCookie('_test_key', cookieJar, baseURL);
@@ -112,7 +106,7 @@ describe('TransientStore', () => {
       { ...defaultConfig, legacySameSiteCookie: false },
       (req: NodeRequest, res: NodeResponse) => transientStore.save('test_key', req, res, { value: 'foo' })
     );
-    const transientStore = getTransientStore({ ...defaultConfig, baseURL, legacySameSiteCookie: false });
+    const transientStore = new TransientStore(getConfig({ ...defaultConfig, baseURL, legacySameSiteCookie: false }));
     const cookieJar = new CookieJar();
     const { value } = await get(baseURL, '/', { cookieJar });
     const cookies = fromCookieJar(cookieJar, baseURL);
@@ -124,7 +118,7 @@ describe('TransientStore', () => {
     const baseURL: string = await setup(defaultConfig, (req: NodeRequest, res: NodeResponse) =>
       transientStore.save('test_key', req, res, { sameSite: 'lax', value: 'foo' })
     );
-    const transientStore = getTransientStore({ ...defaultConfig, baseURL });
+    const transientStore = new TransientStore(getConfig({ ...defaultConfig, baseURL }));
     const cookieJar = new CookieJar();
     const { value } = await get(baseURL, '/', { cookieJar });
     const cookies = fromCookieJar(cookieJar, baseURL);
@@ -143,7 +137,7 @@ describe('TransientStore', () => {
     const baseURL: string = await setup(defaultConfig, (req: NodeRequest, res: NodeResponse) =>
       transientStore.read('test_key', req, res)
     );
-    const transientStore = getTransientStore({ ...defaultConfig, baseURL });
+    const transientStore = new TransientStore(getConfig({ ...defaultConfig, baseURL }));
     const { value } = await get(baseURL, '/');
     expect(value).toBeUndefined();
   });
@@ -152,7 +146,7 @@ describe('TransientStore', () => {
     const baseURL: string = await setup(defaultConfig, (req: NodeRequest, res: NodeResponse) =>
       transientStore.read('test_key', req, res)
     );
-    const transientStore = getTransientStore({ ...defaultConfig, baseURL });
+    const transientStore = new TransientStore(getConfig({ ...defaultConfig, baseURL }));
     const cookieJar = await toSignedCookieJar(
       {
         test_key: `foo.${await generateSignature('test_key', 'foo')}`,
@@ -172,7 +166,7 @@ describe('TransientStore', () => {
     const baseURL: string = await setup(defaultConfig, (req: NodeRequest, res: NodeResponse) =>
       transientStore.read('test_key', req, res)
     );
-    const transientStore = getTransientStore({ ...defaultConfig, baseURL });
+    const transientStore = new TransientStore(getConfig({ ...defaultConfig, baseURL }));
     const cookieJar = await toSignedCookieJar(
       {
         _test_key: `foo.${await generateSignature('_test_key', 'foo')}`
@@ -191,7 +185,7 @@ describe('TransientStore', () => {
       { ...defaultConfig, legacySameSiteCookie: false },
       (req: NodeRequest, res: NodeResponse) => transientStore.read('test_key', req, res)
     );
-    const transientStore = getTransientStore({ ...defaultConfig, baseURL, legacySameSiteCookie: false });
+    const transientStore = new TransientStore(getConfig({ ...defaultConfig, baseURL, legacySameSiteCookie: false }));
     const cookieJar = await toSignedCookieJar(
       {
         _test_key: `foo.${await generateSignature('_test_key', 'foo')}`
@@ -206,7 +200,7 @@ describe('TransientStore', () => {
 
   it("should not throw when it can't verify the signature", async () => {
     const baseURL: string = await setup(defaultConfig, (req, res) => transientStore.read('test_key', req, res));
-    const transientStore = getTransientStore({ ...defaultConfig, baseURL });
+    const transientStore = new TransientStore(getConfig({ ...defaultConfig, baseURL }));
     const cookieJar = await toSignedCookieJar(
       {
         test_key: 'foo.bar',
@@ -217,11 +211,5 @@ describe('TransientStore', () => {
 
     const { value } = await get(baseURL, '/', { cookieJar });
     expect(value).toBeUndefined();
-  });
-
-  it('should generate a code verifier and challenge', async () => {
-    const transientStore = getTransientStore({ ...defaultConfig, baseURL: 'http://example.com' });
-    expect(transientStore.generateCodeVerifier()).toEqual(expect.any(String));
-    expect(transientStore.calculateCodeChallenge('foo')).toEqual(expect.any(String));
   });
 });

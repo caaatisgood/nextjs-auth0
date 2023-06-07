@@ -36,7 +36,7 @@ export default function loginHandlerFactory(
       ...(opts.authorizationParams || {})
     };
 
-    const transientOpts: StoreOptions = {
+    const transientOpts: Pick<StoreOptions, 'sameSite'> = {
       sameSite: opts.authorizationParams.response_mode === 'form_post' ? 'none' : config.session.cookie.sameSite
     };
 
@@ -44,14 +44,14 @@ export default function loginHandlerFactory(
     if (typeof stateValue !== 'object') {
       throw new Error('Custom state value must be an object.');
     }
-    stateValue.nonce = transientHandler.generateNonce();
+    stateValue.nonce = client.generateRandomNonce();
     stateValue.returnTo = stateValue.returnTo || opts.returnTo;
 
     const responseType = opts.authorizationParams.response_type as string;
     const usePKCE = responseType.includes('code');
     if (usePKCE) {
       debug('response_type includes code, the authorization request will use PKCE');
-      stateValue.code_verifier = transientHandler.generateCodeVerifier();
+      stateValue.code_verifier = client.generateRandomCodeVerifier();
     }
 
     if (responseType !== config.authorizationParams.response_type) {
@@ -63,15 +63,18 @@ export default function loginHandlerFactory(
 
     const authParams = {
       ...opts.authorizationParams,
-      nonce: await transientHandler.save('nonce', req, res, transientOpts),
+      nonce: await transientHandler.save('nonce', req, res, { ...transientOpts, value: client.generateRandomNonce() }),
       state: await transientHandler.save('state', req, res, {
         ...transientOpts,
         value: encodeState(stateValue)
       }),
       ...(usePKCE
         ? {
-            code_challenge: transientHandler.calculateCodeChallenge(
-              await transientHandler.save('code_verifier', req, res, transientOpts)
+            code_challenge: client.calculateCodeChallenge(
+              await transientHandler.save('code_verifier', req, res, {
+                ...transientOpts,
+                value: client.generateRandomCodeVerifier()
+              })
             ),
             code_challenge_method: 'S256'
           }

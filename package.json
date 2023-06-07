@@ -122,6 +122,7 @@
     "debug": "^4.3.4",
     "joi": "^17.6.0",
     "jose": "^4.9.2",
+    "oauth4webapi": "^2.3.0",
     "openid-client": "^5.2.1",
     "tslib": "^2.4.0",
     "url-join": "^4.0.1"
@@ -144,7 +145,8 @@
       "!<rootDir>/src/shared.ts",
       "!<rootDir>/src/auth0-session/config.ts",
       "!<rootDir>/src/auth0-session/index.ts",
-      "!<rootDir>/src/auth0-session/session-cache.ts"
+      "!<rootDir>/src/auth0-session/session-cache.ts",
+      "!<rootDir>/src/auth0-session/client/edge-client.ts"
     ],
     "coverageReporters": [
       "lcov",
@@ -160,10 +162,11 @@
       }
     },
     "coverageProvider": "v8",
-    "preset": "ts-jest",
+    "preset": "ts-jest/presets/js-with-ts",
     "globalSetup": "./tests/global-setup.ts",
     "setupFilesAfterEnv": [
       "./tests/setup.ts"
-    ]
+    ],
+    "transformIgnorePatterns": ["/node_modules/(?!oauth4webapi)"]
   }
 }

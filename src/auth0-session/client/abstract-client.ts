@@ -19,7 +19,7 @@ export interface CallbackParamsType {
   session_state?: string;
   response?: string;
 
-  [key: string]: unknown;
+  [key: string]: any;
 }
 
 export interface CallbackExtras {
@@ -30,7 +30,7 @@ export interface CallbackExtras {
 export interface OpenIDCallbackChecks {
   max_age?: number;
   nonce?: string;
-  response_type?: string;
+  response_type: string;
   state?: string;
   code_verifier?: string;
 }
@@ -55,14 +55,7 @@ export interface EndSessionParameters {
   [key: string]: unknown;
 }
 
-export type ClientAuthMethod =
-  | 'client_secret_basic'
-  | 'client_secret_post'
-  | 'client_secret_jwt'
-  | 'private_key_jwt'
-  | 'tls_client_auth'
-  | 'self_signed_tls_client_auth'
-  | 'none';
+export type ClientAuthMethod = 'client_secret_basic' | 'client_secret_post' | 'private_key_jwt' | 'none';
 
 export interface AuthorizationParameters {
   acr_values?: string;
@@ -97,8 +90,8 @@ export abstract class AbstractClient {
   abstract callback(
     redirectUri: string,
     parameters: CallbackParamsType,
-    checks?: OpenIDCallbackChecks,
-    extras?: CallbackExtras
+    checks: OpenIDCallbackChecks,
+    extras: CallbackExtras
   ): Promise<TokenEndpointResponse>;
   abstract authorizationUrl(parameters?: Record<string, unknown>): Promise<string>;
   abstract endSessionUrl(parameters?: EndSessionParameters): Promise<string>;
@@ -109,5 +102,5 @@ export abstract class AbstractClient {
   ): Promise<TokenEndpointResponse>;
   abstract generateRandomCodeVerifier(): string;
   abstract generateRandomNonce(): string;
-  abstract calculateCodeChallenge(codeVerifier: string): string;
+  abstract calculateCodeChallenge(codeVerifier: string): Promise<string> | string;
 }

@@ -42,7 +42,7 @@ export const _initAuth = ({
   sessionCache: SessionCache;
 } => {
   // Init base layer (with base config)
-  const transientStore = new TransientStore(baseConfig, client);
+  const transientStore = new TransientStore(baseConfig);
 
   const sessionStore = baseConfig.session.store
     ? new StatefulSession<Session>(baseConfig)

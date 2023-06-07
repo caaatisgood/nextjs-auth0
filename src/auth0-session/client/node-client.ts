@@ -174,8 +174,8 @@ export class NodeClient extends AbstractClient {
   async callback(
     redirectUri: string,
     parameters: CallbackParamsType,
-    checks?: OpenIDCallbackChecks,
-    extras?: CallbackExtras
+    checks: OpenIDCallbackChecks,
+    extras: CallbackExtras
   ): Promise<TokenEndpointResponse> {
     const client = await this.getClient();
     try {
