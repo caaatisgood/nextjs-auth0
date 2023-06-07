@@ -20,7 +20,7 @@ export class EdgeClient extends AbstractClient {
       return [this.as, this.client as oauth.Client];
     }
 
-    const issuer = new URL('https://example.as.com');
+    const issuer = new URL(this.config.issuerBaseURL);
     this.as = await oauth.discoveryRequest(issuer).then((response) => oauth.processDiscoveryResponse(issuer, response));
 
     this.client = {
@@ -32,11 +32,11 @@ export class EdgeClient extends AbstractClient {
     return [this.as, this.client as oauth.Client];
   }
 
-  async callbackParams(req: Auth0Request) {
+  async callbackParams(req: Auth0Request, expectedState: string) {
     const [as, client] = await this.getClient();
     const url =
       req.getMethod().toUpperCase() === 'GET' ? new URL(req.getUrl()) : new URLSearchParams(await req.getBody());
-    const params = oauth.validateAuthResponse(as, client, url);
+    const params = oauth.validateAuthResponse(as, client, url, expectedState);
     if (oauth.isOAuth2Error(params)) {
       const err: Error & { error?: string; error_description?: string } = new Error();
       err.error = params.error;
@@ -55,6 +55,7 @@ export class EdgeClient extends AbstractClient {
     const [as, client] = await this.getClient();
     const params = new URLSearchParams(parameters);
     // TODO: support other `response_type`s
+    console.log(Object.fromEntries(params.entries()));
     const response = await oauth.authorizationCodeGrantRequest(
       as,
       client,

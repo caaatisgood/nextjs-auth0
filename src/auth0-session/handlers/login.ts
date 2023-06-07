@@ -70,7 +70,7 @@ export default function loginHandlerFactory(
       }),
       ...(usePKCE
         ? {
-            code_challenge: client.calculateCodeChallenge(
+            code_challenge: await client.calculateCodeChallenge(
               await transientHandler.save('code_verifier', req, res, {
                 ...transientOpts,
                 value: client.generateRandomCodeVerifier()

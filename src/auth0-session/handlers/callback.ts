@@ -36,18 +36,16 @@ export default function callbackHandlerFactory(
 
     let tokenResponse;
 
-    const callbackParams = await client.callbackParams(req);
-
-    if (!callbackParams.state) {
-      throw new MissingStateParamError();
-    }
-
     const expectedState = await transientCookieHandler.read('state', req, res);
-
     if (!expectedState) {
       throw new MissingStateCookieError();
     }
 
+    const callbackParams = await client.callbackParams(req, expectedState);
+
+    if (!callbackParams.state) {
+      throw new MissingStateParamError();
+    }
     const max_age = await transientCookieHandler.read('max_age', req, res);
     const code_verifier = await transientCookieHandler.read('code_verifier', req, res);
     const nonce = await transientCookieHandler.read('nonce', req, res);

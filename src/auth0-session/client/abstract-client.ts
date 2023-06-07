@@ -86,7 +86,7 @@ export interface AuthorizationParameters {
 
 export abstract class AbstractClient {
   constructor(protected config: Config, protected telemetry: Telemetry) {}
-  abstract callbackParams(req: Auth0Request): Promise<CallbackParamsType>;
+  abstract callbackParams(req: Auth0Request, expectedState: string): Promise<CallbackParamsType>;
   abstract callback(
     redirectUri: string,
     parameters: CallbackParamsType,
