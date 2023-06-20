@@ -49,12 +49,18 @@ function handleCallbackFactory(handler, config) {
         });
     };
     return function (reqOrOptions, res, options) {
+        console.log('[handleCallbackFactory] return func reqOrOptions', reqOrOptions);
+        console.log('[handleCallbackFactory] return func res', res);
+        console.log('[handleCallbackFactory] return func options', options);
         if (reqOrOptions instanceof http_1.IncomingMessage && res) {
+            console.log('[handleCallbackFactory] return reqOrOptions instanceof IncomingMessage');
             return callback(reqOrOptions, res, options);
         }
         if (typeof reqOrOptions === 'function') {
+            console.log('[handleCallbackFactory] return typeof reqOrOptions === "function"');
             return function (req, res) { return callback(req, res, reqOrOptions(req)); };
         }
+        console.log('[handleCallbackFactory] return fallback');
         return function (req, res) { return callback(req, res, reqOrOptions); };
     };
 }

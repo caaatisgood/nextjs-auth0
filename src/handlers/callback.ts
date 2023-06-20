@@ -240,12 +240,18 @@ export default function handleCallbackFactory(handler: BaseHandleCallback, confi
     res?: NextApiResponse,
     options?: CallbackOptions
   ): any => {
+    console.log('[handleCallbackFactory] return func reqOrOptions', reqOrOptions);
+    console.log('[handleCallbackFactory] return func res', res);
+    console.log('[handleCallbackFactory] return func options', options);
     if (reqOrOptions instanceof IncomingMessage && res) {
+      console.log('[handleCallbackFactory] return reqOrOptions instanceof IncomingMessage');
       return callback(reqOrOptions, res, options);
     }
     if (typeof reqOrOptions === 'function') {
+      console.log('[handleCallbackFactory] return typeof reqOrOptions === "function"');
       return (req: NextApiRequest, res: NextApiResponse) => callback(req, res, reqOrOptions(req));
     }
+    console.log('[handleCallbackFactory] return fallback');
     return (req: NextApiRequest, res: NextApiResponse) => callback(req, res, reqOrOptions as CallbackOptions);
   };
 }
