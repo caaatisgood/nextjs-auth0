@@ -221,14 +221,17 @@ const idTokenValidator =
  * @ignore
  */
 export default function handleCallbackFactory(handler: BaseHandleCallback, config: NextConfig): HandleCallback {
+  console.log('[handleCallbackFactory] curry');
   const callback: CallbackHandler = async (req: NextApiRequest, res: NextApiResponse, options = {}): Promise<void> => {
     try {
       assertReqRes(req, res);
+      console.log('[handleCallbackFactory:callback] assertReqRes');
       return await handler(req, res, {
         ...options,
         afterCallback: idTokenValidator(options.afterCallback, options.organization || config.organization)
       });
     } catch (e) {
+      console.log('[handleCallbackFactory:callback] error', e);
       throw new CallbackHandlerError(e as HandlerErrorCause);
     }
   };

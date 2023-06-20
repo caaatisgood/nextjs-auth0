@@ -45,7 +45,9 @@ export default function callbackHandlerFactory(
   sessionCache: SessionCache,
   transientCookieHandler: TransientStore
 ): HandleCallback {
+  console.log('[callbackHandlerFactory] curry');
   return async (req, res, options) => {
+    console.log('[callbackHandlerFactory]');
     const client = await getClient();
     const redirectUri = options?.redirectUri || getRedirectUri(config);
 
@@ -69,6 +71,8 @@ export default function callbackHandlerFactory(
     const response_type =
       (await transientCookieHandler.read('response_type', req, res)) || config.authorizationParams.response_type;
 
+    console.log('[callbackHandlerFactory:client.callback]');
+
     try {
       tokenSet = await client.callback(
         redirectUri,
@@ -91,6 +95,7 @@ export default function callbackHandlerFactory(
       } else {
         err = new EscapedError(err.message);
       }
+      console.log('[callbackHandlerFactory:client.callback] error', err, { openIdState: decodeState(expectedState) });
       throw createHttpError(400, err, { openIdState: decodeState(expectedState) });
     }
 
@@ -98,14 +103,17 @@ export default function callbackHandlerFactory(
     let session = await sessionCache.fromTokenSet(tokenSet);
 
     if (options?.afterCallback) {
+      console.log('[callbackHandlerFactory:afterCallback]');
       session = await options.afterCallback(req, res, session, openidState);
     }
 
     if (session) {
+      console.log('[callbackHandlerFactory] sessionCache.create');
       await sessionCache.create(req, res, session);
     }
 
     if (!res.writableEnded) {
+      console.log('[callbackHandlerFactory] !res.writableEnded, writeHead 302');
       res.writeHead(302, {
         Location: res.getHeader('Location') || openidState.returnTo || config.baseURL
       });
