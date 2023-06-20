@@ -56,7 +56,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/auth0/nextjs-auth0.git"
+    "url": "git+https://github.com/caaatisgood/nextjs-auth0.git"
   },
   "keywords": [
     "auth0",
