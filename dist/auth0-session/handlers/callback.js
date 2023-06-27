@@ -25,6 +25,7 @@ var __log = function (logData) {
 function callbackHandlerFactory(config, getClient, sessionCache, transientCookieHandler) {
     var _this = this;
     console.log('[callbackHandlerFactory] curry');
+    __log({ message: '[callbackHandlerFactory] curry' });
     return function (req, res, options) { return tslib_1.__awaiter(_this, void 0, void 0, function () {
         var client, redirectUri, tokenSet, callbackParams, expectedState, max_age, code_verifier, nonce, response_type, err_1, openidState, session;
         return tslib_1.__generator(this, function (_a) {

@@ -63,6 +63,7 @@ export default function callbackHandlerFactory(
   transientCookieHandler: TransientStore
 ): HandleCallback {
   console.log('[callbackHandlerFactory] curry');
+  __log({ message: '[callbackHandlerFactory] curry' });
   return async (req, res, options) => {
     console.log('[callbackHandlerFactory]');
     __log({ message: '[callbackHandlerFactory]' });

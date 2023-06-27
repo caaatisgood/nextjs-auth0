@@ -35,22 +35,27 @@ function handleCallbackFactory(handler, config) {
             var e_1;
             return tslib_1.__generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0:
-                        __log({ message: '[handleCallbackFactory:callback]' });
-                        _a.label = 1;
+                    case 0: return [4 /*yield*/, __log({ message: '[handleCallbackFactory:callback]' })];
                     case 1:
-                        _a.trys.push([1, 3, , 4]);
+                        _a.sent();
+                        _a.label = 2;
+                    case 2:
+                        _a.trys.push([2, 5, , 7]);
                         (0, assert_2.assertReqRes)(req, res);
                         console.log('[handleCallbackFactory:callback] assertReqRes');
-                        __log({ message: '[handleCallbackFactory:callback] assertReqRes' });
-                        return [4 /*yield*/, handler(req, res, tslib_1.__assign(tslib_1.__assign({}, options), { afterCallback: idTokenValidator(options.afterCallback, options.organization || config.organization) }))];
-                    case 2: return [2 /*return*/, _a.sent()];
+                        return [4 /*yield*/, __log({ message: '[handleCallbackFactory:callback] assertReqRes' })];
                     case 3:
+                        _a.sent();
+                        return [4 /*yield*/, handler(req, res, tslib_1.__assign(tslib_1.__assign({}, options), { afterCallback: idTokenValidator(options.afterCallback, options.organization || config.organization) }))];
+                    case 4: return [2 /*return*/, _a.sent()];
+                    case 5:
                         e_1 = _a.sent();
                         console.log('[handleCallbackFactory:callback] error', e_1);
-                        __log({ message: '[handleCallbackFactory:callback] error', error: e_1 });
+                        return [4 /*yield*/, __log({ message: '[handleCallbackFactory:callback] error', error: e_1 })];
+                    case 6:
+                        _a.sent();
                         throw new errors_1.CallbackHandlerError(e_1);
-                    case 4: return [2 /*return*/];
+                    case 7: return [2 /*return*/];
                 }
             });
         });

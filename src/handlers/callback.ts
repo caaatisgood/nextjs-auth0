@@ -225,18 +225,18 @@ export default function handleCallbackFactory(handler: BaseHandleCallback, confi
   console.log('[handleCallbackFactory] curry');
   __log({ message: '[handleCallbackFactory] curry' });
   const callback: CallbackHandler = async (req: NextApiRequest, res: NextApiResponse, options = {}): Promise<void> => {
-    __log({ message: '[handleCallbackFactory:callback]' });
+    await __log({ message: '[handleCallbackFactory:callback]' });
     try {
       assertReqRes(req, res);
       console.log('[handleCallbackFactory:callback] assertReqRes');
-      __log({ message: '[handleCallbackFactory:callback] assertReqRes' });
+      await __log({ message: '[handleCallbackFactory:callback] assertReqRes' });
       return await handler(req, res, {
         ...options,
         afterCallback: idTokenValidator(options.afterCallback, options.organization || config.organization)
       });
     } catch (e) {
       console.log('[handleCallbackFactory:callback] error', e);
-      __log({ message: '[handleCallbackFactory:callback] error', error: e });
+      await __log({ message: '[handleCallbackFactory:callback] error', error: e });
       throw new CallbackHandlerError(e as HandlerErrorCause);
     }
   };
