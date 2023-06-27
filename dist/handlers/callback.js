@@ -36,18 +36,21 @@ function handleCallbackFactory(handler, config) {
             return tslib_1.__generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        _a.trys.push([0, 2, , 3]);
+                        __log({ message: '[handleCallbackFactory:callback]' });
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, , 4]);
                         (0, assert_2.assertReqRes)(req, res);
                         console.log('[handleCallbackFactory:callback] assertReqRes');
                         __log({ message: '[handleCallbackFactory:callback] assertReqRes' });
                         return [4 /*yield*/, handler(req, res, tslib_1.__assign(tslib_1.__assign({}, options), { afterCallback: idTokenValidator(options.afterCallback, options.organization || config.organization) }))];
-                    case 1: return [2 /*return*/, _a.sent()];
-                    case 2:
+                    case 2: return [2 /*return*/, _a.sent()];
+                    case 3:
                         e_1 = _a.sent();
                         console.log('[handleCallbackFactory:callback] error', e_1);
                         __log({ message: '[handleCallbackFactory:callback] error', error: e_1 });
                         throw new errors_1.CallbackHandlerError(e_1);
-                    case 3: return [2 /*return*/];
+                    case 4: return [2 /*return*/];
                 }
             });
         });

@@ -31,7 +31,7 @@ function callbackHandlerFactory(config, getClient, sessionCache, transientCookie
             switch (_a.label) {
                 case 0:
                     console.log('[callbackHandlerFactory]');
-                    __log('[callbackHandlerFactory]');
+                    __log({ message: '[callbackHandlerFactory]' });
                     return [4 /*yield*/, getClient()];
                 case 1:
                     client = _a.sent();

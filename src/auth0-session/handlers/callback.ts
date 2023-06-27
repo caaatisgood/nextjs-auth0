@@ -65,7 +65,7 @@ export default function callbackHandlerFactory(
   console.log('[callbackHandlerFactory] curry');
   return async (req, res, options) => {
     console.log('[callbackHandlerFactory]');
-    __log('[callbackHandlerFactory]');
+    __log({ message: '[callbackHandlerFactory]' });
 
     const client = await getClient();
     const redirectUri = options?.redirectUri || getRedirectUri(config);

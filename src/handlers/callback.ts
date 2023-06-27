@@ -225,6 +225,7 @@ export default function handleCallbackFactory(handler: BaseHandleCallback, confi
   console.log('[handleCallbackFactory] curry');
   __log({ message: '[handleCallbackFactory] curry' });
   const callback: CallbackHandler = async (req: NextApiRequest, res: NextApiResponse, options = {}): Promise<void> => {
+    __log({ message: '[handleCallbackFactory:callback]' });
     try {
       assertReqRes(req, res);
       console.log('[handleCallbackFactory:callback] assertReqRes');
