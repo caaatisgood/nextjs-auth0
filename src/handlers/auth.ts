@@ -179,7 +179,12 @@ export default function handlerFactory({
 
       try {
         const handler = route && customHandlers.hasOwnProperty(route) && customHandlers[route];
-        __log({ message: '[auth0] handler', handler });
+        __log({
+          message: '[auth0] handler',
+          handler: handler?.toString(),
+          req,
+          res
+        });
 
         if (handler) {
           await handler(req, res);
@@ -195,6 +200,7 @@ export default function handlerFactory({
           res.status(res.statusCode === 200 ? 500 : res.statusCode).end();
         }
       }
+      __log({ message: '[auth0] return' });
       return Promise.resolve();
     };
   };

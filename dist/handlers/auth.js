@@ -51,7 +51,12 @@ function handlerFactory(_a) {
                     case 1:
                         _c.trys.push([1, 5, , 7]);
                         handler = route && customHandlers.hasOwnProperty(route) && customHandlers[route];
-                        __log({ message: '[auth0] handler', handler: handler });
+                        __log({
+                            message: '[auth0] handler',
+                            handler: handler === null || handler === void 0 ? void 0 : handler.toString(),
+                            req: req,
+                            res: res
+                        });
                         if (!handler) return [3 /*break*/, 3];
                         return [4 /*yield*/, handler(req, res)];
                     case 2:
@@ -72,7 +77,9 @@ function handlerFactory(_a) {
                             res.status(res.statusCode === 200 ? 500 : res.statusCode).end();
                         }
                         return [3 /*break*/, 7];
-                    case 7: return [2 /*return*/, Promise.resolve()];
+                    case 7:
+                        __log({ message: '[auth0] return' });
+                        return [2 /*return*/, Promise.resolve()];
                 }
             });
         }); };
